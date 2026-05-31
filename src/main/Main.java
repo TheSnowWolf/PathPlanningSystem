@@ -1,9 +1,9 @@
 package main;
 
-import main.algorithm.Dijkstra;
 import main.model.Graph;
 import main.model.Node;
 import main.model.PathResult;
+import main.service.RouteService;
 
 import java.util.List;
 
@@ -21,13 +21,14 @@ public class Main {
         graph.addUndirectedEdge(3, 4, 80);
         graph.addUndirectedEdge(1, 4, 400);
 
-        Dijkstra dijkstra = new Dijkstra();
-        PathResult result = dijkstra.findPath(graph, 1, 4);
+        RouteService routeService = new RouteService(graph);
+
+        PathResult result = routeService.findPath(1, 4, "Dijkstra");
 
         printResult(result);
     }
 
-    public static void printResult(PathResult result) {
+    private static void printResult(PathResult result) {
         if (result.getPath().isEmpty()) {
             System.out.println("没有找到路径");
             return;

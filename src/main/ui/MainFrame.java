@@ -1,5 +1,6 @@
 package main.ui;
 
+import main.database.GraphDao;
 import main.model.Graph;
 import main.service.RouteService;
 
@@ -7,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /*
+26.6.13 接入数据库读写
 26.6.13 添加路径菜单事件，补充菜单占位提示
 26.6.7 MainFrame主窗口，基于JSwing
 
@@ -37,14 +39,16 @@ import java.awt.*;
 public class MainFrame extends JFrame {
     private Graph graph;
     private RouteService routeService;
+    private GraphDao graphDao; //6.13
 
     private MapPanel mapPanel;
     private ControlPanel controlPanel;
     private ResultPanel resultPanel;
 
-    public MainFrame(Graph graph, RouteService routeService) {
+    public MainFrame(Graph graph, RouteService routeService, GraphDao graphDao) {
         this.graph = graph;
         this.routeService = routeService;
+        this.graphDao = graphDao;
 
         initFrame();
         initComponents();
@@ -180,12 +184,56 @@ public class MainFrame extends JFrame {
         return helpMenu;
     }
 
+    private void loadGraphFromDatabase() { //6.13
+        try {
+            Graph newGraph = graphDao.loadGraph();
+
+            this.graph = newGraph;
+            routeService.setGraph(newGraph);
+            mapPanel.setGraph(newGraph);
+            resultPanel.clear();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "已从数据库读取地图数据。",
+                    "读取成功",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (Exception ex) {
+            showError(ex);
+        }
+    }
+
+    private void saveGraphToDatabase() {
+        try {
+            graphDao.saveGraph(graph);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "当前地图已保存到数据库。",
+                    "保存成功",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (Exception ex) {
+            showError(ex);
+        }
+    }
+
     private void showTodo(String functionName) {
         JOptionPane.showMessageDialog(
                 this,
                 functionName + " 功能将在后续版本实现。",
                 "功能开发中",
                 JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    private void showError(Exception ex) {
+        JOptionPane.showMessageDialog(
+                this,
+                ex.getMessage(),
+                "错误",
+                JOptionPane.ERROR_MESSAGE
         );
     }
 }

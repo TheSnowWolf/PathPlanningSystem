@@ -13,6 +13,7 @@ import java.util.Map;
 /*
 26.6.7 ControlPanel负责选择起点，终点，算法
 26.6.13 添加清除路径与算法对比
+26.6.13 添加setGraph，用于数据库重新加载地图后刷新下拉框
 */
 
 public class ControlPanel extends JPanel {
@@ -66,6 +67,25 @@ public class ControlPanel extends JPanel {
         add(findButton);
         add(clearButton);
         add(compareButton);
+    }
+
+    public void setGraph(Graph graph) { //6.13
+        this.graph = graph;
+        refreshNodeBoxes();
+    }
+
+    private void refreshNodeBoxes() {
+        startBox.removeAllItems();
+        endBox.removeAllItems();
+
+        for (Node node : graph.getAllNodes()) {
+            startBox.addItem(new NodeItem(node));
+            endBox.addItem(new NodeItem(node));
+        }
+
+        if (endBox.getItemCount() > 1) {
+            endBox.setSelectedIndex(1);
+        }
     }
 
     public void findPath() {

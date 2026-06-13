@@ -9,6 +9,7 @@ import java.util.Map;
 
 /*
 使用Map管理算法，负责统一调用算法
+ver26.6.13 添加setGraph，用于数据库重新加载地图
 ver26.6.13 添加算法对比接口
 ver26.5.31 添加调用Dijkstra，A*
 */
@@ -22,6 +23,10 @@ public class RouteService {
 
         algorithmMap.put("Dijkstra", new Dijkstra());
         algorithmMap.put("A*", new AStar());
+    }
+
+    public void setGraph(Graph graph) {
+        this.graph = graph;
     }
 
     public PathResult findPath(int startId, int endId, String algorithmName) {

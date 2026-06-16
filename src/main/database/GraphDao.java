@@ -3,7 +3,6 @@ package main.database;
 import main.model.Edge;
 import main.model.Graph;
 import main.model.Node;
-import org.sqlite.core.DB;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /*
+ver 26.6.16 清理无用 import
 ver 26.6.13 GraphDao负责Graph对象与数据库之间的转换
 
 数据库 -> Graph：
@@ -34,6 +34,10 @@ public class GraphDao {
     }
 
     public void saveGraph(Graph graph) {
+        if (graph == null) {
+            throw new IllegalArgumentException("地图数据不能为空");
+        }
+
         DBUtil.initDatabase();
 
         String deleteEdges = "DELETE FROM edges";
@@ -53,9 +57,9 @@ public class GraphDao {
             connection.setAutoCommit(false);
 
             try (PreparedStatement deleteEdgeStatement = connection.prepareStatement(deleteEdges);
-                PreparedStatement deleteNodeStatement = connection.prepareStatement(deleteNodes);
-                PreparedStatement nodeStatement = connection.prepareStatement(insertNode);
-                PreparedStatement edgeStatement = connection.prepareStatement(insertEdge)) {
+                 PreparedStatement deleteNodeStatement = connection.prepareStatement(deleteNodes);
+                 PreparedStatement nodeStatement = connection.prepareStatement(insertNode);
+                 PreparedStatement edgeStatement = connection.prepareStatement(insertEdge)) {
 
                 deleteEdgeStatement.executeUpdate();
                 deleteNodeStatement.executeUpdate();
@@ -82,12 +86,14 @@ public class GraphDao {
                 edgeStatement.executeBatch();
 
                 connection.commit();
+
             } catch (SQLException e) {
                 connection.rollback();
                 throw e;
             } finally {
                 connection.setAutoCommit(true);
             }
+
         } catch (SQLException e) {
             throw new RuntimeException("保存地图到数据库失败", e);
         }
@@ -97,8 +103,8 @@ public class GraphDao {
         String sql = "SELECT id, name, x, y FROM nodes ORDER BY id";
 
         try (Connection connection = DBUtil.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
@@ -118,8 +124,8 @@ public class GraphDao {
         String sql = "SELECT from_id, to_id, weight FROM edges ORDER BY id";
 
         try (Connection connection = DBUtil.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 int from = resultSet.getInt("from_id");
@@ -128,8 +134,9 @@ public class GraphDao {
 
                 graph.addEdge(from, to, weight);
             }
+
         } catch (SQLException e) {
-            throw new RuntimeException("读取边数据失败", e);
+            throw new RuntimeException("读取边数据失败，请检查数据库中的边是否引用了不存在的节点", e);
         }
     }
 }

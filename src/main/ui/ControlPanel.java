@@ -1,5 +1,6 @@
 package main.ui;
 
+import main.database.RecordDao;
 import main.model.Graph;
 import main.model.Node;
 import main.model.PathResult;
@@ -14,6 +15,7 @@ import java.util.Map;
 26.6.7 ControlPanel负责选择起点，终点，算法
 26.6.13 添加清除路径与算法对比
 26.6.13 添加setGraph，用于数据库重新加载地图后刷新下拉框
+26.6.16 添加路径查询记录保存
 */
 
 public class ControlPanel extends JPanel {
@@ -21,6 +23,7 @@ public class ControlPanel extends JPanel {
     private RouteService routeService;
     private MapPanel mapPanel;
     private ResultPanel resultPanel;
+    private RecordDao recordDao;
 
     private JComboBox<NodeItem> startBox;
     private JComboBox<NodeItem> endBox;
@@ -32,6 +35,7 @@ public class ControlPanel extends JPanel {
         this.routeService = routeService;
         this.mapPanel = mapPanel;
         this.resultPanel = resultPanel;
+        this.recordDao = new RecordDao();
 
         initComponents();
     }
@@ -48,6 +52,10 @@ public class ControlPanel extends JPanel {
         for (Node node : graph.getAllNodes()) {
             startBox.addItem(new NodeItem(node));
             endBox.addItem(new NodeItem(node));
+        }
+
+        if (endBox.getItemCount() > 1) {
+            endBox.setSelectedIndex(1);
         }
 
         JButton findButton = new JButton("开始寻路");
@@ -69,7 +77,7 @@ public class ControlPanel extends JPanel {
         add(compareButton);
     }
 
-    public void setGraph(Graph graph) { //6.13
+    public void setGraph(Graph graph) {
         this.graph = graph;
         refreshNodeBoxes();
     }
@@ -102,6 +110,9 @@ public class ControlPanel extends JPanel {
 
             mapPanel.setPath(result.getPath());
             resultPanel.showResult(result);
+
+            recordDao.saveRecord(result, startNode, endNode);
+
         } catch (Exception ex) {
             showError(ex);
         }
@@ -124,14 +135,28 @@ public class ControlPanel extends JPanel {
 
             resultPanel.showCompareResult(results);
 
+            saveCompareRecords(results, startNode, endNode);
+
             String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
             PathResult selectedResult = results.get(selectedAlgorithm);
 
             if (selectedResult != null) {
                 mapPanel.setPath(selectedResult.getPath());
             }
+
         } catch (Exception ex) {
             showError(ex);
+        }
+    }
+
+    private void saveCompareRecords(Map<String, PathResult> results,
+                                    Node startNode, Node endNode) {
+        if (results == null || results.isEmpty()) {
+            return;
+        }
+
+        for (PathResult result : results.values()) {
+            recordDao.saveRecord(result, startNode, endNode);
         }
     }
 

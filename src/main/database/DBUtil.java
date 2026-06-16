@@ -12,6 +12,7 @@ DBUtil负责数据库连接、建表、初始化默认地图数据
 数据库文件：campus_path.db
 
 26.6.13 添加大型默认校园测试地图
+26.6.16 添加路径查询记录表 path_records
 */
 
 public class DBUtil {
@@ -61,11 +62,28 @@ public class DBUtil {
                 )
                 """;
 
+        //6.16
+        String createRecordTable = """
+                CREATE TABLE IF NOT EXISTS path_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    algorithm_name TEXT NOT NULL,
+                    start_node TEXT NOT NULL,
+                    end_node TEXT NOT NULL,
+                    distance REAL,
+                    path TEXT NOT NULL,
+                    visited_count INTEGER NOT NULL,
+                    time_cost_ms INTEGER NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """;
+
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
 
             statement.execute(createNodeTable);
             statement.execute(createEdgeTable);
+            //6.16
+            statement.execute(createRecordTable);
 
         } catch (SQLException e) {
             throw new RuntimeException("数据库建表失败", e);

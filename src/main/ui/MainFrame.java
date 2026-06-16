@@ -1,6 +1,7 @@
 package main.ui;
 
 import main.database.GraphDao;
+import main.database.RecordDao;
 import main.model.Graph;
 import main.service.RouteService;
 
@@ -8,16 +9,17 @@ import javax.swing.*;
 import java.awt.*;
 
 /*
+26.6.16 添加历史记录菜单，支持查看与清空路径查询记录
+26.6.16 清理未完成的菜单占位项
 26.6.13 接入数据库读写
-26.6.13 添加路径菜单事件，补充菜单占位提示
+26.6.13 添加路径菜单事件
 26.6.7 MainFrame主窗口，基于JSwing
 
-框架：
+最终菜单结构：
+
 文件
 ├── 从数据库读取地图
 ├── 保存地图到数据库
-├── 导入地图文件
-├── 导出查询结果
 └── 退出
 
 路径
@@ -25,11 +27,9 @@ import java.awt.*;
 ├── 清除路径
 └── 算法对比
 
-设置
-├── 算法默认选择
-├── 语言设置
-├── 界面主题
-└── 数据库设置
+记录
+├── 查看历史记录
+└── 清空历史记录
 
 帮助
 ├── 使用说明
@@ -39,7 +39,8 @@ import java.awt.*;
 public class MainFrame extends JFrame {
     private Graph graph;
     private RouteService routeService;
-    private GraphDao graphDao; //6.13
+    private GraphDao graphDao;
+    private RecordDao recordDao;
 
     private MapPanel mapPanel;
     private ControlPanel controlPanel;
@@ -49,6 +50,7 @@ public class MainFrame extends JFrame {
         this.graph = graph;
         this.routeService = routeService;
         this.graphDao = graphDao;
+        this.recordDao = new RecordDao();
 
         initFrame();
         initComponents();
@@ -78,12 +80,12 @@ public class MainFrame extends JFrame {
 
         JMenu fileMenu = createFileMenu();
         JMenu pathMenu = createPathMenu();
-        JMenu settingMenu = createSettingMenu();
+        JMenu recordMenu = createRecordMenu();
         JMenu helpMenu = createHelpMenu();
 
         menuBar.add(fileMenu);
         menuBar.add(pathMenu);
-        menuBar.add(settingMenu);
+        menuBar.add(recordMenu);
         menuBar.add(helpMenu);
 
         setJMenuBar(menuBar);
@@ -94,21 +96,14 @@ public class MainFrame extends JFrame {
 
         JMenuItem openItem = new JMenuItem("从数据库读取地图");
         JMenuItem saveItem = new JMenuItem("保存地图到数据库");
-        JMenuItem importItem = new JMenuItem("导入地图文件");
-        JMenuItem exportItem = new JMenuItem("导出查询结果");
         JMenuItem exitItem = new JMenuItem("退出");
 
         openItem.addActionListener(e -> loadGraphFromDatabase());
         saveItem.addActionListener(e -> saveGraphToDatabase());
-        importItem.addActionListener(e -> showTodo("导入地图文件"));
-        exportItem.addActionListener(e -> showTodo("导出查询结果"));
         exitItem.addActionListener(e -> System.exit(0));
 
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
-        fileMenu.addSeparator();
-        fileMenu.add(importItem);
-        fileMenu.add(exportItem);
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
 
@@ -133,25 +128,19 @@ public class MainFrame extends JFrame {
         return pathMenu;
     }
 
-    private JMenu createSettingMenu() {
-        JMenu settingMenu = new JMenu("设置");
+    private JMenu createRecordMenu() {
+        JMenu recordMenu = new JMenu("记录");
 
-        JMenuItem defaultAlgorithmItem = new JMenuItem("算法默认选择");
-        JMenuItem languageItem = new JMenuItem("语言设置");
-        JMenuItem themeItem = new JMenuItem("界面主题");
-        JMenuItem databaseItem = new JMenuItem("数据库设置");
+        JMenuItem viewItem = new JMenuItem("查看历史记录");
+        JMenuItem clearItem = new JMenuItem("清空历史记录");
 
-        defaultAlgorithmItem.addActionListener(e -> showTodo("算法默认选择"));
-        languageItem.addActionListener(e -> showTodo("语言设置"));
-        themeItem.addActionListener(e -> showTodo("界面主题"));
-        databaseItem.addActionListener(e -> showTodo("数据库设置"));
+        viewItem.addActionListener(e -> showRecordDialog());
+        clearItem.addActionListener(e -> clearRecords());
 
-        settingMenu.add(defaultAlgorithmItem);
-        settingMenu.add(languageItem);
-        settingMenu.add(themeItem);
-        settingMenu.add(databaseItem);
+        recordMenu.add(viewItem);
+        recordMenu.add(clearItem);
 
-        return settingMenu;
+        return recordMenu;
     }
 
     private JMenu createHelpMenu() {
@@ -166,14 +155,17 @@ public class MainFrame extends JFrame {
                         "1. 在左侧选择起点和终点\n" +
                         "2. 选择 Dijkstra 或 A* 算法\n" +
                         "3. 点击开始寻路查看路径\n" +
-                        "4. 点击算法对比查看不同算法的访问节点数和耗时",
+                        "4. 点击算法对比查看不同算法的访问节点数和耗时\n" +
+                        "5. 通过“记录 -> 查看历史记录”查看查询结果",
                 "使用说明",
                 JOptionPane.INFORMATION_MESSAGE
         ));
 
         aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(
                 this,
-                "基于最短路算法的路径规划系统\n支持 Dijkstra 与 A*",
+                "基于最短路算法的路径规划系统\n" +
+                        "支持 Dijkstra 与 A* 算法\n" +
+                        "支持 SQLite 地图数据与路径记录持久化",
                 "关于",
                 JOptionPane.INFORMATION_MESSAGE
         ));
@@ -184,7 +176,7 @@ public class MainFrame extends JFrame {
         return helpMenu;
     }
 
-    private void loadGraphFromDatabase() { //6.13
+    private void loadGraphFromDatabase() {
         try {
             Graph newGraph = graphDao.loadGraph();
 
@@ -220,13 +212,40 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void showTodo(String functionName) {
-        JOptionPane.showMessageDialog(
+    private void showRecordDialog() {
+        try {
+            RecordDialog dialog = new RecordDialog(this, recordDao);
+            dialog.setVisible(true);
+        } catch (Exception ex) {
+            showError(ex);
+        }
+    }
+
+    private void clearRecords() {
+        int option = JOptionPane.showConfirmDialog(
                 this,
-                functionName + " 功能将在后续版本实现。",
-                "功能开发中",
-                JOptionPane.INFORMATION_MESSAGE
+                "确定要清空所有历史路径记录吗？",
+                "确认清空",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
         );
+
+        if (option != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            recordDao.clearRecords();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "历史路径记录已清空。",
+                    "清空成功",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (Exception ex) {
+            showError(ex);
+        }
     }
 
     private void showError(Exception ex) {

@@ -163,15 +163,15 @@ public class RecordDao {
     }
 
     public static class PathRecord {
-        private int id;
-        private String algorithmName;
-        private String startNode;
-        private String endNode;
-        private Double distance;
-        private String path;
-        private int visitedCount;
-        private long timeCostMs;
-        private String createdAt;
+        private final int id;
+        private final String algorithmName;
+        private final String startNode;
+        private final String endNode;
+        private final Double distance;
+        private final String path;
+        private final int visitedCount;
+        private final long timeCostMs;
+        private final String createdAt;
 
         public PathRecord(int id, String algorithmName, String startNode,
                           String endNode, Double distance, String path,
@@ -201,10 +201,6 @@ public class RecordDao {
 
         public String getEndNode() {
             return endNode;
-        }
-
-        public Double getDistance() {
-            return distance;
         }
 
         public String getPath() {

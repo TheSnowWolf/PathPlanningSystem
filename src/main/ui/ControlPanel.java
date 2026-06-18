@@ -27,10 +27,10 @@ import java.util.concurrent.ExecutionException;
 
 public class ControlPanel extends JPanel {
     private Graph graph;
-    private RouteService routeService;
-    private MapPanel mapPanel;
-    private ResultPanel resultPanel;
-    private RecordDao recordDao;
+    private final RouteService routeService;
+    private final MapPanel mapPanel;
+    private final ResultPanel resultPanel;
+    private final RecordDao recordDao;
 
     private JComboBox<NodeItem> startBox;
     private JComboBox<NodeItem> endBox;
@@ -276,7 +276,7 @@ public class ControlPanel extends JPanel {
     }
 
     private static class NodeItem {
-        private Node node;
+        private final Node node;
 
         public NodeItem(Node node) {
             this.node = node;

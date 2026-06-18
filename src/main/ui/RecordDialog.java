@@ -19,7 +19,7 @@ ver 26.6.16
 */
 
 public class RecordDialog extends JDialog {
-    private RecordDao recordDao;
+    private final RecordDao recordDao;
     private JTable table;
     private DefaultTableModel tableModel;
 

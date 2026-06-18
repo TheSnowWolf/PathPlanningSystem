@@ -38,9 +38,9 @@ import java.awt.*;
 
 public class MainFrame extends JFrame {
     private Graph graph;
-    private RouteService routeService;
-    private GraphDao graphDao;
-    private RecordDao recordDao;
+    private final RouteService routeService;
+    private final GraphDao graphDao;
+    private final RecordDao recordDao;
 
     private MapPanel mapPanel;
     private ControlPanel controlPanel;

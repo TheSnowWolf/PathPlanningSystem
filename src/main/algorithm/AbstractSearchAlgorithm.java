@@ -11,7 +11,7 @@ import java.util.*;
 该抽象父类为Dijkstra与A*核心部分，是二者共用的模板
 Dijkstra算法为启发函数为0的A*算法
 使用继承简化两个算法
-**该模板仅用于DIjkstra与A***
+**该模板仅用于Dijkstra与A***
 **无法处理负权边**
 */
 
@@ -155,8 +155,8 @@ public abstract class AbstractSearchAlgorithm implements PathAlgorithm {
 
     //内部类：储存当前节点距离
     private static class SearchNode {
-        private int nodeId;
-        private double priority;
+        private final int nodeId;
+        private final double priority;
 
         public SearchNode(int nodeId, double priority) {
             this.nodeId = nodeId;

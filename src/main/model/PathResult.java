@@ -3,11 +3,11 @@ package main.model;
 import java.util.List;
 
 public class PathResult {
-    private List<Node> path;
-    private double totalDistance;
-    private long timeMillis;
-    private int visitedCount;
-    private String algorithmName;
+    private final List<Node> path;
+    private final double totalDistance;
+    private final long timeMillis;
+    private final int visitedCount;
+    private final String algorithmName;
 
     public PathResult(List<Node> path, double totalDistance, long timeMillis,
                       int visitedCount, String algorithmName) {

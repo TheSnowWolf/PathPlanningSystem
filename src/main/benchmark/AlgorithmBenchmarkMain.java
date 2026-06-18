@@ -97,7 +97,6 @@ public class AlgorithmBenchmarkMain {
         printResultTable(dijkstraResult, aStarResult);
         printConclusion(dijkstraResult, aStarResult);
 
-        graph = null;
         System.gc();
     }
 
@@ -179,11 +178,11 @@ public class AlgorithmBenchmarkMain {
     }
 
     private static class BenchmarkResult {
-        private String algorithmName;
-        private double totalDistance;
-        private int pathNodeCount;
-        private int visitedCount;
-        private double elapsedMillis;
+        private final String algorithmName;
+        private final double totalDistance;
+        private final int pathNodeCount;
+        private final int visitedCount;
+        private final double elapsedMillis;
 
         public BenchmarkResult(String algorithmName,
                                double totalDistance,

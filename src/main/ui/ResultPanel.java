@@ -14,7 +14,7 @@ import java.util.Map;
 */
 
 public class ResultPanel extends JPanel {
-    private JTextArea textArea;
+    private final JTextArea textArea;
 
     public ResultPanel() {
         setLayout(new BorderLayout());

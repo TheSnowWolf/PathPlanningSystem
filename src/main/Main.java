@@ -12,21 +12,23 @@ import javax.swing.SwingUtilities;
 26.6.13 改成启动时从数据库读图
 26.6.13 添加更大型的测试数据
 
-Main
+程序启动
 ↓
-DBUtil.initDatabase()
+初始化 SQLite 数据库
 ↓
-如果 campus_path.db 不存在，自动创建
+如果数据库为空，插入默认校园地图数据
 ↓
-如果 nodes 表为空，自动插入默认地图
+从 nodes 表和 edges 表读取数据
 ↓
-GraphDao.loadGraph()
+构造 Graph 对象
 ↓
-从 nodes / edges 表构造 Graph
+创建 RouteService
 ↓
-RouteService 使用 Graph
+打开 Swing 主窗口
 ↓
-MainFrame 显示 Graph
+用户选择起点、终点和算法
+↓
+执行寻路并显示结果
 */
 
 

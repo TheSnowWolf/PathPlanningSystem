@@ -62,11 +62,11 @@ public class RouteService {
     }
 
     private void validateNode(int startId, int endId) {
-        if (graph.containsNode(startId)) {
+        if (!graph.containsNode(startId)) {
             throw new IllegalArgumentException("起点不存在：" + startId);
         }
 
-        if (graph.containsNode(endId)) {
+        if (!graph.containsNode(endId)) {
             throw new IllegalArgumentException("终点不存在：" + endId);
         }
     }

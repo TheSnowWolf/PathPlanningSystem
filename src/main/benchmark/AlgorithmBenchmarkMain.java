@@ -17,7 +17,8 @@ AlgorithmBenchmarkMain
 100 x 100
 200 x 200
 300 x 300
-400 x 400
+500 x 500
+1000 x 1000
 
 也可以通过命令行参数指定规模：
 AlgorithmBenchmarkMain 500 500
@@ -33,7 +34,7 @@ public class AlgorithmBenchmarkMain {
             {200, 200},
             {300, 300},
             {500, 500},
-            {2000, 2000}
+            {1000, 1000}
     };
 
     public static void main(String[] args) {

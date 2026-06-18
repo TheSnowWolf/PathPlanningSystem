@@ -72,7 +72,7 @@ public class Graph {
     }
 
     public boolean containsNode(int id) {
-        return !nodeMap.containsKey(id);
+        return nodeMap.containsKey(id);
     }
 
     public boolean isEmpty() {

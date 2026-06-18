@@ -151,21 +151,23 @@ public class MainFrame extends JFrame {
 
         usageItem.addActionListener(e -> JOptionPane.showMessageDialog(
                 this,
-                "使用步骤：\n" +
-                        "1. 在左侧选择起点和终点\n" +
-                        "2. 选择 Dijkstra 或 A* 算法\n" +
-                        "3. 点击开始寻路查看路径\n" +
-                        "4. 点击算法对比查看不同算法的访问节点数和耗时\n" +
-                        "5. 通过“记录 -> 查看历史记录”查看查询结果",
+                """
+                        使用步骤：
+                        1. 在左侧选择起点和终点
+                        2. 选择 Dijkstra 或 A* 算法
+                        3. 点击开始寻路查看路径
+                        4. 点击算法对比查看不同算法的访问节点数和耗时
+                        5. 通过“记录 -> 查看历史记录”查看查询结果""",
                 "使用说明",
                 JOptionPane.INFORMATION_MESSAGE
         ));
 
         aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(
                 this,
-                "基于最短路算法的路径规划系统\n" +
-                        "支持 Dijkstra 与 A* 算法\n" +
-                        "支持 SQLite 地图数据与路径记录持久化",
+                """
+                        基于最短路算法的路径规划系统
+                        支持 Dijkstra 与 A* 算法
+                        支持 SQLite 地图数据与路径记录持久化""",
                 "关于",
                 JOptionPane.INFORMATION_MESSAGE
         ));

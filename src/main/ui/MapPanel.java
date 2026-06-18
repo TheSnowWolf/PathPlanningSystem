@@ -6,10 +6,8 @@ import main.model.Node;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /*
 26.6.16 修复无向边重复绘制，增强路径显示效果
@@ -34,11 +32,15 @@ public class MapPanel extends JPanel {
     }
 
     public void setPath(List<Node> path) {
+        this.path = Objects.requireNonNullElseGet(path, ArrayList::new);
+
+        /* Java 9 new features
         if (path == null) {
             this.path = new ArrayList<>();
         } else {
             this.path = path;
         }
+        */
 
         repaint();
     }

@@ -10,12 +10,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /*
 26.6.7 ControlPanel负责选择起点，终点，算法
 26.6.13 添加清除路径与算法对比
 26.6.13 添加setGraph，用于数据库重新加载地图后刷新下拉框
 26.6.16 添加路径查询记录保存
+26.6.18 使用 SwingWorker 将寻路任务放入后台线程，避免大规模地图下阻塞 Swing 界面
+
+说明：
+1. Swing 的界面更新必须在事件分发线程中完成
+2. 算法计算可能耗时，因此放入 SwingWorker#doInBackground
+3. 算法执行完成后，在 SwingWorker#done 中更新地图、结果面板和数据库记录
 */
 
 public class ControlPanel extends JPanel {
@@ -28,6 +35,10 @@ public class ControlPanel extends JPanel {
     private JComboBox<NodeItem> startBox;
     private JComboBox<NodeItem> endBox;
     private JComboBox<String> algorithmBox;
+
+    private JButton findButton;
+    private JButton clearButton;
+    private JButton compareButton;
 
     public ControlPanel(Graph graph, RouteService routeService,
                         MapPanel mapPanel, ResultPanel resultPanel) {
@@ -58,9 +69,9 @@ public class ControlPanel extends JPanel {
             endBox.setSelectedIndex(1);
         }
 
-        JButton findButton = new JButton("开始寻路");
-        JButton clearButton = new JButton("清除路径");
-        JButton compareButton = new JButton("算法对比");
+        findButton = new JButton("开始寻路");
+        clearButton = new JButton("清除路径");
+        compareButton = new JButton("算法对比");
 
         findButton.addActionListener(e -> findPath());
         clearButton.addActionListener(e -> clearPath());
@@ -102,18 +113,46 @@ public class ControlPanel extends JPanel {
             Node endNode = getSelectedEndNode();
             String algorithm = (String) algorithmBox.getSelectedItem();
 
-            PathResult result = routeService.findPath(
-                    startNode.getId(),
-                    endNode.getId(),
-                    algorithm
-            );
+            setControlsEnabled(false);
+            findButton.setText("寻路中...");
 
-            mapPanel.setPath(result.getPath());
-            resultPanel.showResult(result);
+            SwingWorker<PathResult, Void> worker = new SwingWorker<>() {
+                @Override
+                protected PathResult doInBackground() {
+                    return routeService.findPath(
+                            startNode.getId(),
+                            endNode.getId(),
+                            algorithm
+                    );
+                }
 
-            recordDao.saveRecord(result, startNode, endNode);
+                @Override
+                protected void done() {
+                    try {
+                        PathResult result = get();
+
+                        mapPanel.setPath(result.getPath());
+                        resultPanel.showResult(result);
+
+                        recordDao.saveRecord(result, startNode, endNode);
+
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                        showError(new RuntimeException("寻路任务被中断", ex));
+                    } catch (ExecutionException ex) {
+                        showWorkerError(ex);
+                    } finally {
+                        findButton.setText("开始寻路");
+                        setControlsEnabled(true);
+                    }
+                }
+            };
+
+            worker.execute();
 
         } catch (Exception ex) {
+            findButton.setText("开始寻路");
+            setControlsEnabled(true);
             showError(ex);
         }
     }
@@ -128,23 +167,50 @@ public class ControlPanel extends JPanel {
             Node startNode = getSelectedStartNode();
             Node endNode = getSelectedEndNode();
 
-            Map<String, PathResult> results = routeService.compareAlgorithms(
-                    startNode.getId(),
-                    endNode.getId()
-            );
+            setControlsEnabled(false);
+            compareButton.setText("对比中...");
 
-            resultPanel.showCompareResult(results);
+            SwingWorker<Map<String, PathResult>, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Map<String, PathResult> doInBackground() {
+                    return routeService.compareAlgorithms(
+                            startNode.getId(),
+                            endNode.getId()
+                    );
+                }
 
-            saveCompareRecords(results, startNode, endNode);
+                @Override
+                protected void done() {
+                    try {
+                        Map<String, PathResult> results = get();
 
-            String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
-            PathResult selectedResult = results.get(selectedAlgorithm);
+                        resultPanel.showCompareResult(results);
+                        saveCompareRecords(results, startNode, endNode);
 
-            if (selectedResult != null) {
-                mapPanel.setPath(selectedResult.getPath());
-            }
+                        String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
+                        PathResult selectedResult = results.get(selectedAlgorithm);
+
+                        if (selectedResult != null) {
+                            mapPanel.setPath(selectedResult.getPath());
+                        }
+
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                        showError(new RuntimeException("算法对比任务被中断", ex));
+                    } catch (ExecutionException ex) {
+                        showWorkerError(ex);
+                    } finally {
+                        compareButton.setText("算法对比");
+                        setControlsEnabled(true);
+                    }
+                }
+            };
+
+            worker.execute();
 
         } catch (Exception ex) {
+            compareButton.setText("算法对比");
+            setControlsEnabled(true);
             showError(ex);
         }
     }
@@ -158,6 +224,16 @@ public class ControlPanel extends JPanel {
         for (PathResult result : results.values()) {
             recordDao.saveRecord(result, startNode, endNode);
         }
+    }
+
+    private void setControlsEnabled(boolean enabled) {
+        startBox.setEnabled(enabled);
+        endBox.setEnabled(enabled);
+        algorithmBox.setEnabled(enabled);
+
+        findButton.setEnabled(enabled);
+        clearButton.setEnabled(enabled);
+        compareButton.setEnabled(enabled);
     }
 
     private Node getSelectedStartNode() {
@@ -178,6 +254,16 @@ public class ControlPanel extends JPanel {
         }
 
         return end.getNode();
+    }
+
+    private void showWorkerError(ExecutionException ex) {
+        Throwable cause = ex.getCause();
+
+        if (cause instanceof Exception exception) {
+            showError(exception);
+        } else {
+            showError(new RuntimeException("后台任务执行失败", ex));
+        }
     }
 
     private void showError(Exception ex) {
